@@ -1,0 +1,102 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+    xmlns:pro="http://www.liquibase.org/xml/ns/pro" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+      http://www.liquibase.org/xml/ns/pro 
+      http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.0.xsd 
+      http://www.liquibase.org/xml/ns/dbchangelog 
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+	<changeSet id="1" author="luan.magalhaes" context="Generate tag 0">
+        <tagDatabase tag="0"/>
+    </changeSet>
+
+	<changeSet id="2" author="luan.magalhaes" dbms ="postgresql" context="Create table users">
+		<sql>
+			CREATE SEQUENCE IF NOT EXISTS public.user_id_seq
+			INCREMENT 1
+			MINVALUE 1
+			MAXVALUE 9223372036854775807
+			START 1
+			CACHE 1;
+
+			CREATE TABLE IF NOT EXISTS public.users (
+				id INT PRIMARY KEY DEFAULT nextval('user_id_seq'),
+				tx_username character varying(30) NOT NULL,
+				tx_name character varying(100),
+				tx_password character varying(128) NOT NULL,
+				tx_role character varying(15) NOT NULL DEFAULT 'ROLE_USER',
+				tx_status character varying(1) NOT NULL DEFAULT 'A',
+				tx_email character varying(150),
+				tx_phone character varying(20) NOT NULL,
+				tx_address character varying(300),
+				dt_birth date NOT NULL,
+				dt_hiring date NOT NULL,
+				CONSTRAINT uq_users_tx_username UNIQUE (tx_username)
+			);
+
+			ALTER TABLE public.users OWNER TO postgres;
+			ALTER SEQUENCE public.user_id_seq OWNED BY users.id;
+		</sql>
+		<rollback>
+			DROP TABLE public.users;
+		</rollback>
+	</changeSet>
+
+	<changeSet id="3" author="luan.magalhaes" dbms ="postgresql" context="Create ">
+		<sql>
+			CREATE SEQUENCE IF NOT EXISTS public.role_id_seq
+			INCREMENT 1
+			MINVALUE 1
+			MAXVALUE 9223372036854775807
+			START 1
+			CACHE 1;
+
+			CREATE TABLE IF NOT EXISTS public.role (
+				id INT PRIMARY KEY DEFAULT nextval('role_id_seq'),
+				tx_rolename character varying(30) NOT NULL,
+				CONSTRAINT uq_role_tx_rolename UNIQUE (tx_rolename)
+			);
+
+			ALTER TABLE public.role OWNER TO postgres;
+			ALTER SEQUENCE public.role_id_seq OWNED BY role.id;
+		</sql>
+		<rollback>
+			DROP TABLE public.role;		
+		</rollback>
+	</changeSet>
+
+	<changeSet id="4" author="luan.magalhaes" dbms ="postgresql" context=" ">
+		<sql>
+			CREATE TABLE IF NOT EXISTS public.users_role (
+				user_id INT,
+				role_id INT,
+				CONSTRAINT pk_users_role PRIMARY KEY (user_id, role_id),
+				CONSTRAINT fk_users_users_role FOREIGN KEY(user_id) REFERENCES public.users(id),
+				CONSTRAINT fk_role_users_role FOREIGN KEY(role_id) REFERENCES public.role(id)
+			);
+
+			ALTER TABLE public.users_role OWNER TO postgres;
+		</sql>
+		<rollback>
+			DROP TABLE public.users_role;
+		</rollback>
+	</changeSet>
+
+
+<!--
+	<changeSet id="X" author="luan.magalhaes" dbms ="postgresql" context=" ">
+		<sql>
+			
+		</sql>
+		<rollback>
+			
+		</rollback>
+	</changeSet>
+ -->
+
+</databaseChangeLog>

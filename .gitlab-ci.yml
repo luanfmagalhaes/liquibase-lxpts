@@ -1,0 +1,54 @@
+variables:
+  APP_NAME: "fmp-liquibase"
+
+stages:
+  - build
+  - delivery
+  - clean
+
+.get_variables:
+  before_script:
+    - "[[ ! $CI_PIPELINE_ID ]] && CI_PIPELINE_ID=\"local\""
+    - "[[ ! $CI_COMMIT_TAG ]] && CONTAINER_VERSION=${CI_PIPELINE_ID} || CONTAINER_VERSION=${CI_COMMIT_TAG}"
+    - "echo REGISTRY: \"${REGISTRY}\""
+    - "echo APP_NAME: \"${APP_NAME}\""
+    - "echo CONTAINER_VERSION: \"${CONTAINER_VERSION}\""
+
+build:
+  stage: build
+  image: docker:stable
+  tags:
+    - fmp-dev-team
+  before_script:
+    - !reference [.get_variables, before_script]
+  script:
+    - docker build -t ${REGISTRY}/${APP_NAME}:${CONTAINER_VERSION} .
+    - docker save ${REGISTRY}/${APP_NAME}:${CONTAINER_VERSION} > image.tar
+  after_script:
+    - !reference [.get_variables, before_script]
+    - docker rmi ${REGISTRY}/${APP_NAME}:${CONTAINER_VERSION}
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - "image.tar"
+
+delivery:
+  stage: delivery
+  dependencies:
+    - build
+  allow_failure: false
+  image: docker:stable
+  only:
+    - tags
+  tags:
+    - fmp-dev-team
+  before_script:
+    - !reference [.get_variables, before_script]
+  script:
+    - "echo CONTAINER_VERSION: \"${CONTAINER_VERSION}\""
+    - docker load < image.tar
+    - docker login -u ${REGISTRY_USER} -p ${REGISTRY_PASSWORD} ${REGISTRY}
+    - docker push ${REGISTRY}/${APP_NAME}:${CONTAINER_VERSION}
+  after_script:
+    - !reference [.get_variables, before_script]
+    - docker rmi ${REGISTRY}/${APP_NAME}:${CONTAINER_VERSION}

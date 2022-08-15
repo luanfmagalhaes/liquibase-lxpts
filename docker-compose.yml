@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  liquibase:
+    build: .
+    image: first-miles-liquibase:1.0
+    environment:
+      DB_HOST: "${DB_HOST:-host.docker.internal}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_DATABASE_NAME: "${DB_DATABASE_NAME:-location-web}"
+      DB_USER: "${DB_USERNAME:-postgres}"
+      DB_PASSWORD: "${DB_PASSWORD:-postgres}"
+
+      DEPLOY_PROFILE: "${DEPLOY_PROFILE:-NEW}"
+      TYPE_OPERATION: "${TYPE_OPERATION:-update}"
+      DB_VERSION_TO_ROLLBACK: "${DB_VERSION_TO_ROLLBACK:-}"
+      FROM_DOCKER: 1
